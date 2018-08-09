@@ -1,67 +1,63 @@
 use std::io;
 use std::io::{ Write };
 
-use super::Attributes;
-
-const TARBOX_MAGIC: [u8; 2] = [0x7A, 0xB0];
-
-fn system_byteness() -> u8 {
-    #[cfg(target_arch = "x86")]
-    return 4;
-    #[cfg(target_arch = "x86_64")]
-    return 8;
-}
+use super::{
+    Attributes,
+    TARBOX_MAGIC,
+};
 
 #[derive(Clone, Debug)]
 pub struct Encoder {
     inner: Vec<u8>,
-    content_size: usize,
-    attributes: Option<Attributes>,
+    attributes: Attributes,
 }
 
 impl Encoder {
-    fn new() -> Encoder {
+    /// Returns a new Encoder including a new, empty `AttributesV1` instance.
+    pub fn new(attrs: Attributes) -> Encoder {
         Encoder {
             inner: Vec::new(),
-            content_size: 0,
-            attributes: None,
+            attributes: attrs,
         }
+    }
+
+    pub fn attributes(self) -> Attributes {
+        self.attributes
     }
 
     /// Writes the tarbox header and then the wrapped content.
     /// The header will look like the following:
-    /// +--------------+------------+----------+-------+------------+
-    /// | TARBOX MAGIC | SYS USZ SZ | ATTRS SZ | ATTRS | CONTENT SZ |
-    /// +--------------+------------+----------+-------+------------+
-    /// |    [u8; 2]   |     u8     |  usize   | [u8]  |   usize    |
-    /// +--------------+------------+----------+-------+------------+
-    fn unwrap(self) -> Vec<u8> {
-        let final_buf = Vec::new();
-        final_buf.extend_from_slice(TARBOX_MAGIC);
-        final_buf.append(system_byteness());
+    /// 
+    /// ```text
+    /// +--------------+--------+-------+-----+
+    /// | TARBOX MAGIC |  VERS  | ATTRS | NUL |
+    /// +--------------+--------+-------+-----+
+    /// |    [u8; 2]   |   u8   | [u8]  | u8  |
+    /// +--------------+--------+-------+-----+
+    /// ```
+    pub fn finish(self) -> Vec<u8> {
+        let mut final_buf = Vec::new();
+        final_buf.extend_from_slice(&TARBOX_MAGIC);
 
-        if let Some(attrs) = self.attributes {
-            let attr_bytes = attrs.to_bytes();
-            final_buf.append(attr_bytes.len());
-            final_buf.extend(attr_bytes.into_iter());
-        } else {
-            final_buf.append(0 as usize);
-        }
+        // Push header version
+        let attrs_version = Attributes::version();
+        final_buf.push(attrs_version);
 
-        final_buf.extend(self.content_size.to_le().to_bytes().iter());
+        // Push attributes including version header
+        final_buf.extend(self.attributes.to_bytes().unwrap().iter());
+
+        // Push the end of header byte
+        final_buf.push(0);
+
         final_buf.extend(self.inner.into_iter());
-
-        final_buf
+        return final_buf;
     }
 }
 
 impl Write for Encoder {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let bytes_len = buf.len();
-
-        self.content_size += bytes_len;
         self.inner.extend(buf);
-
         Ok(bytes_len)
     }
 
@@ -72,8 +68,31 @@ impl Write for Encoder {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Write;
+    use super::{
+        Attributes,
+        Encoder,
+        TARBOX_MAGIC,
+    };
+
     #[test]
     fn test_encoder() {
-        let enc = Encoder::new();
+        let attrs = Attributes::empty();
+        let mut enc = Encoder::new(attrs.clone());
+
+        let inner: [u8; 2] = [0xca, 0xfe];
+        assert_eq!(2, enc.write(&inner).unwrap());
+
+        let version = Attributes::version();
+        let data = enc.finish();
+
+        let mut expected_payload = Vec::new();
+        expected_payload.extend(&TARBOX_MAGIC);
+        expected_payload.push(version);
+        expected_payload.extend(attrs.to_bytes().unwrap().as_slice());
+        expected_payload.extend(&[0x0, 0xca, 0xfe]);
+        let expected_payload = expected_payload.as_slice();
+
+        assert_eq!(expected_payload, data.as_slice());
     }
 }

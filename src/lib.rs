@@ -26,7 +26,7 @@ pub type BufResult = errors::Result<Vec<u8>>;
 /// `tar` archive, encrypts the resulting archive, removes the unencrypted
 /// archive, and then compresses the encrypted archive, resulting in
 /// a "tarbox".
-pub fn seal_path(path: &PathBuf) -> errors::Result<crypt::BoxSecret> {
+pub fn seal_path(path: &PathBuf) -> errors::Result<tarbox::TarboxSecret> {
     let extension = path.extension().unwrap_or(OsStr::new(""));
     let mut extension = extension.to_os_string().into_string().unwrap();
 
@@ -48,7 +48,7 @@ pub fn seal_path(path: &PathBuf) -> errors::Result<crypt::BoxSecret> {
         .open(target_path)?;
 
     // Make a new `BoxSecret`
-    let secret = crypt::BoxSecret::generate();
+    let secret = tarbox::TarboxSecret::generate();
 
     // Pack the target files to the tar archive
     debug!("packing path {:?} to archive buffer", path);
@@ -60,12 +60,16 @@ pub fn seal_path(path: &PathBuf) -> errors::Result<crypt::BoxSecret> {
     debug!("encrypting compressed buf (size {})", buf.len());
     let buf = crypt::encrypt_buffer(&buf, &secret)?;
 
+    debug!("finalizing tarbox (size {})", buf.len());
+    // let enc = tarbox::Encoder::<tarbox::attributes::AttributeVersions::V1>::new();
+    let buf = tarbox::wrap_buffer(&buf, &secret)?;
+
     target_file.write_all(&buf)?;
 
     Ok(secret)
 }
 
-pub fn unseal_path(path: &PathBuf, dest: &PathBuf, secret: &crypt::BoxSecret) -> errors::Result<()> {
+pub fn unseal_path(path: &PathBuf, dest: &PathBuf, secret: &tarbox::TarboxSecret) -> errors::Result<()> {
     DirBuilder::new()
         .recursive(true)
         .create(&dest)?;

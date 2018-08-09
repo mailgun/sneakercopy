@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use sneakercopy::{
     *,
     errors::*,
+    tarbox,
 };
 
 #[derive(Debug, StructOpt)]
@@ -96,7 +97,7 @@ fn seal_subcmd(_args: &Cli, path: &PathBuf) -> sneakercopy::errors::Result<()> {
 
 fn unseal_subcmd(_args: &Cli, path: &PathBuf, dest: &Option<PathBuf>, key: &String) -> sneakercopy::errors::Result<()> {
     check_path(&path)?;
-    let secret = crypt::BoxSecret::try_from(key.clone())?;
+    let secret = tarbox::TarboxSecret::try_from(key.clone())?;
     let dest = dest.clone().unwrap_or(path.parent().unwrap().to_path_buf());
 
     unseal_path(&path, &dest, &secret)?;
