@@ -7,7 +7,6 @@ extern crate sodiumoxide;
 #[macro_use] extern crate structopt;
 
 use quicli::prelude::*;
-use std::convert::TryFrom;
 use std::path::PathBuf;
 
 use sneakercopy::{
@@ -88,19 +87,21 @@ fn check_path(path: &PathBuf) -> sneakercopy::errors::Result<()> {
 fn seal_subcmd(_args: &Cli, path: &PathBuf) -> sneakercopy::errors::Result<()> {
     check_path(&path)?;
     let secret = seal_path(&path)?;
-
-    let secret_str: String = secret.into();
-    println!("secret: {}", secret_str);
+    println!("secret: {}", secret.encoded_key());
 
     Ok(())
 }
 
 fn unseal_subcmd(_args: &Cli, path: &PathBuf, dest: &Option<PathBuf>, key: &String) -> sneakercopy::errors::Result<()> {
     check_path(&path)?;
-    let secret = tarbox::TarboxSecret::try_from(key.clone())?;
+    let key = tarbox::secret::decode_key(key.to_string()).unwrap();
+
+    let sb = tarbox::TarboxSecretBuilder::new();
+    let sb = sb.key(key);
+
     let dest = dest.clone().unwrap_or(path.parent().unwrap().to_path_buf());
 
-    unseal_path(&path, &dest, &secret)?;
+    unseal_path(&path, &dest, sb)?;
 
     Ok(())
 }

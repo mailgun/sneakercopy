@@ -3,27 +3,29 @@ use sodiumoxide::crypto::pwhash;
 pub use sodiumoxide::crypto::pwhash::scryptsalsa208sha256::{ SALTBYTES, Salt };
 use sodiumoxide::crypto::secretbox;
 pub use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{ KEYBYTES, NONCEBYTES, Key, Nonce };
-use std::convert::{ Into, TryFrom };
 
-use super::errors;
-
-#[derive(Clone, Debug)]
-pub struct TarboxSecret {
-    key: Key,
-    nonce: Nonce,
-    salt: Salt,
+pub fn decode_key(key: String) -> Option<Key> {
+    let bytes = base64::decode(&key).unwrap();
+    Key::from_slice(bytes.as_slice())
 }
 
-impl TarboxSecret {
-    /// Create a `TarboxSecret` with known values.
-    pub fn new(key: Key, nonce: Nonce, salt: Salt) -> TarboxSecret {
-        TarboxSecret {
-            key: key,
-            nonce: nonce,
-            salt: salt,
-        }
-    }
+pub fn decode_nonce(nonce: String) -> Option<Nonce> {
+    let bytes = base64::decode(&nonce).unwrap();
+    Nonce::from_slice(bytes.as_slice())
+}
 
+pub fn decode_salt(salt: String) -> Option<Salt> {
+    let bytes = base64::decode(&salt).unwrap();
+    Salt::from_slice(bytes.as_slice())
+}
+
+builder!(pub : TarboxSecretBuilder => TarboxSecret {
+    key: Key = None,
+    nonce: Nonce = None,
+    salt: Salt = None
+});
+
+impl TarboxSecret {
     /// Make a brand new _random_ `TarboxSecret` to use for encrypting a tarbox.
     pub fn generate() -> TarboxSecret {
         TarboxSecret {
@@ -37,30 +39,23 @@ impl TarboxSecret {
         &self.key
     }
 
+    pub fn encoded_key(&self) -> String {
+        String::from(base64::encode(&self.key.0))
+    }
+
     pub fn nonce(&self) -> &Nonce {
         &self.nonce
+    }
+
+    pub fn encoded_nonce(&self) -> String {
+        String::from(base64::encode(&self.nonce.0))
     }
 
     pub fn salt(&self) -> &Salt {
         &self.salt
     }
-}
 
-impl TryFrom<String> for TarboxSecret {
-    type Error = errors::Error;
-
-    /// Load a `BoxSecret` from a key data string.
-    /// A key data string takes the form of "<key>.<nonce>".
-    fn try_from(kd: String) -> errors::Result<TarboxSecret> {
-        unimplemented!();
-    }
-
-}
-
-impl Into<String> for TarboxSecret {
-    fn into(self) -> String {
-        let key = base64::encode(&self.key.0);
-        let nonce = base64::encode(&self.nonce.0);
-        String::from(format!("{}.{}", key, nonce))
+    pub fn encoded_salt(&self) -> String {
+        String::from(base64::encode(&self.salt.0))
     }
 }

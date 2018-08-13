@@ -44,7 +44,8 @@ impl Encoder {
         final_buf.push(attrs_version);
 
         // Push attributes including version header
-        final_buf.extend(self.attributes.to_bytes().unwrap().iter());
+        let attrs_data = self.attributes.to_bytes().unwrap();
+        final_buf.extend(attrs_data.iter());
 
         // Push the end of header byte
         final_buf.push(0);

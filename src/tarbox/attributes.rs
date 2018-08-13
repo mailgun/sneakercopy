@@ -1,9 +1,11 @@
-use sodiumoxide::crypto::{
-    pwhash::scryptsalsa208sha256::SALTBYTES,
-    secretbox::xsalsa20poly1305::NONCEBYTES,
+use super::{
+    errors,
+    secret::{
+        NONCEBYTES,
+        SALTBYTES,
+        TarboxSecret,
+    },
 };
-
-use super::errors;
 
 pub type NonceBytes = [u8; NONCEBYTES];
 pub type SaltBytes = [u8; SALTBYTES];
@@ -63,6 +65,24 @@ impl Attributes {
         b.extend(self.nonce.into_iter());
         b.extend(self.salt.into_iter());
         Ok(b)
+    }
+}
+
+impl From<TarboxSecret> for Attributes {
+    fn from(s: TarboxSecret) -> Self {
+        Attributes {
+            nonce: s.nonce().0,
+            salt: s.salt().0,
+        }
+    }
+}
+
+impl<'a> From<&'a TarboxSecret> for Attributes {
+    fn from(s: &'a TarboxSecret) -> Self {
+        Attributes {
+            nonce: s.nonce().0.clone(),
+            salt: s.salt().0.clone(),
+        }
     }
 }
 

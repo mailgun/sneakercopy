@@ -9,6 +9,11 @@ error_chain! {
     }
 
     errors {
+        MissingField(name: String) {
+            description("field missing during build"),
+            display("field missing during build: {}", name),
+        }
+
         PathDoesNotExist(path: String) {
             description("the file or directory specified does not exist"),
             display("file or directory does not exist: {}", path),

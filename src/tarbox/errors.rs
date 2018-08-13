@@ -1,6 +1,7 @@
 error_chain! {
     foreign_links {
         Base64DecodeError(::base64::DecodeError);
+        Io(::std::io::Error);
     }
 
     errors {

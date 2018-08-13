@@ -9,6 +9,7 @@ extern crate libflate;
 extern crate sodiumoxide;
 extern crate tar;
 
+#[macro_use] mod builder;
 pub mod crypt;
 pub mod errors;
 pub mod flate;
@@ -69,7 +70,7 @@ pub fn seal_path(path: &PathBuf) -> errors::Result<tarbox::TarboxSecret> {
     Ok(secret)
 }
 
-pub fn unseal_path(path: &PathBuf, dest: &PathBuf, secret: &tarbox::TarboxSecret) -> errors::Result<()> {
+pub fn unseal_path(path: &PathBuf, dest: &PathBuf, sb: tarbox::TarboxSecretBuilder) -> errors::Result<()> {
     DirBuilder::new()
         .recursive(true)
         .create(&dest)?;
@@ -80,6 +81,16 @@ pub fn unseal_path(path: &PathBuf, dest: &PathBuf, secret: &tarbox::TarboxSecret
 
     let mut buf = Vec::new();
     source_file.read_to_end(&mut buf)?;
+
+    debug!("unwrapping tarbox (size {})", buf.len());
+    let (buf, attrs) = tarbox::unwrap_buffer(&buf)?;
+
+    let nonce = attrs.nonce();
+    let salt = attrs.salt();
+    let secret = sb
+        .nonce(tarbox::secret::Nonce::from_slice(nonce).unwrap())
+        .salt(tarbox::secret::Salt::from_slice(salt).unwrap())
+        .build()?;
 
     debug!("decrypting compressed buf (size {})", buf.len());
     let buf = crypt::decrypt_buffer(&buf, &secret)?;
