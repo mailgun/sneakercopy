@@ -6,6 +6,7 @@ extern crate base64;
 #[macro_use] extern crate error_chain;
 extern crate libflate;
 #[macro_use] extern crate log;
+extern crate rand;
 extern crate sodiumoxide;
 extern crate tar;
 
@@ -15,6 +16,7 @@ pub mod errors;
 pub mod flate;
 pub mod pack;
 pub mod tarbox;
+pub mod password;
 
 use std::ffi::OsStr;
 use std::fs::{ DirBuilder, File, OpenOptions };
@@ -49,7 +51,8 @@ pub fn seal_path(path: &PathBuf) -> errors::Result<tarbox::TarboxSecret> {
         .open(target_path)?;
 
     // Make a new `BoxSecret`
-    let secret = tarbox::TarboxSecret::generate();
+    let password = password::generate_password();
+    let secret = tarbox::TarboxSecret::generate(password);
 
     // Pack the target files to the tar archive
     debug!("packing path {:?} to archive buffer", path);
