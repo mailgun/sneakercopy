@@ -1,5 +1,4 @@
 #![recursion_limit = "1024"]
-#![feature(try_from)]
 #![feature(int_to_from_bytes)]
 
 extern crate base64;

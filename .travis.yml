@@ -1,0 +1,43 @@
+language: rust
+matrix:
+  include:
+    - os: osx
+      rust: nightly
+      env: TARGET=x86_64-apple-darwin
+    - os: linux
+      dist: trusty
+      rust: nightly
+      env: TARGET=x86_64-unknown-linux-gnu
+
+cache:
+  cargo: true
+  directories:
+    - "$HOME/lib"
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install libsodium; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then source ./ci/linux-libsodium-path.sh; fi
+
+install:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then bash ./ci/linux-build-libsodium.sh; fi
+
+script:
+  - cargo build --verbose --target "${TARGET}"
+  - cargo test --verbose --target "${TARGET}"
+
+before_deploy:
+  - cargo build --release --verbose --target "${TARGET}"
+  - mkdir -p release
+  - cp target/${TARGET}/release/sneakercopy release/sneakercopy-${TRAVIS_TAG}-${TARGET}
+  - gzip release/sneakercopy-${TRAVIS_TAG}-${TARGET}
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "kLeQ6JLgo6uAygC1O6T8oUMGaARKCr9GDv2+5idEl+DlOapouPfQ+NfNxnkK1ZhiPZajFp1Ai0K8udOYX5BK3MW+aIFFMuv/xskGwKF8kk2t8Tdd15Vu4U8vCq00Lv5NHegGtSOXyy7dTkD0XKoauuFxtx/BiPHzjMknDLThpVJz4BKv9w2mT7kldR3XgfROGgDABvvuuHolx2tax0NlDmQU2TC73WLChjfawc6K9ZtgBXiOjPdA5wbIxJON8+pYUy3QWZxG0a7OBdSTV35w2ZzvWXIOBTM5zJnR+EV9uF/MiWXMhfMjRSAkOwhjBC6N2HBEc3+gYlDa7cmvUB1FGBW+7XCQ3/51olDeA7ScgBJG1/1GgSgJHzd9iGbxQKybP60XxUVgmEJxR9C+VY76AIMChsoJiugCEMhieRF6JDaJyABcRnTHIgznpQWvY/QkKRD97ABB1JS4CuKrAzvEXZCWSBWgOF8HKWwRJxF5N20tKWOeGVEqm/pw1TSNRUQYgs/jARUde3pZdmFQWqLXIWq2NoS3C+2nHIqC251q28x7kD4He4iraYLowlBxR+rDiGwbMoZXCKPDCYECw27PZMuwq7DOPIllfI6MZNJu6tWdc5FYbtKdVF/dKgkndSvdezwCC3Bqra6l4Se6Wik6CUDq4rBOaffQtyPHtbInU2U="
+  file_glob: true
+  file: "release/sneakercopy-*.gz"
+  skip_cleanup: true
+  on:
+    tags: true
+    branch: master
