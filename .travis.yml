@@ -28,7 +28,7 @@ script:
 before_deploy:
   - cargo build --release --verbose --target "${TARGET}"
   - mkdir -p release
-  - cp target/release/sneakercopy release/sneakercopy-${TRAVIS_TAG}-${TARGET}
+  - cp target/${TARGET}/release/sneakercopy release/sneakercopy-${TRAVIS_TAG}-${TARGET}
   - gzip release/sneakercopy-${TRAVIS_TAG}-${TARGET}
 
 deploy:
