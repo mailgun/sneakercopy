@@ -1,0 +1,15 @@
+language: rust
+os:
+  - osx
+  - linux
+rust:
+  - nightly
+cache:
+  cargo: true
+  directories:
+    - "$HOME/lib"
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install libsodium; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then bash ./ci/linux-build-libsodium.sh; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then source ./ci/linux-libsodium-path.sh; fi
