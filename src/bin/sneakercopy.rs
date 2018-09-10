@@ -38,8 +38,8 @@ enum Subcommand {
         #[structopt(help = "Path to encrypted archive", parse(from_os_str))]
         path: PathBuf,
 
-        #[structopt(help = "Key used for encryption")]
-        key: String,
+        #[structopt(help = "Password used for encryption")]
+        password: String,
 
         #[structopt(short = "C", long = "extract-to", help = "Directory to extract archive to", parse(from_os_str))]
         dest: Option<PathBuf>,
@@ -67,7 +67,7 @@ fn entrypoint(args: Cli) -> sneakercopy::errors::Result<()> {
     let action = &args.subcmd;
     match action {
         Subcommand::Seal{ path } => seal_subcmd(&args, path)?,
-        Subcommand::Unseal{ path, key, dest } => unseal_subcmd(&args, path, dest, key)?,
+        Subcommand::Unseal{ path, password, dest } => unseal_subcmd(&args, path, dest, password)?,
     }
 
     Ok(())
@@ -87,18 +87,15 @@ fn check_path(path: &PathBuf) -> sneakercopy::errors::Result<()> {
 fn seal_subcmd(_args: &Cli, path: &PathBuf) -> sneakercopy::errors::Result<()> {
     check_path(&path)?;
     let secret = seal_path(&path)?;
-    println!("secret: {}", secret.encoded_key());
-
+    println!("secret: {}", secret.password());
     Ok(())
 }
 
-fn unseal_subcmd(_args: &Cli, path: &PathBuf, dest: &Option<PathBuf>, key: &String) -> sneakercopy::errors::Result<()> {
+fn unseal_subcmd(_args: &Cli, path: &PathBuf, dest: &Option<PathBuf>, password: &String) -> sneakercopy::errors::Result<()> {
     check_path(&path)?;
-    let key = tarbox::secret::decode_key(key.to_string()).unwrap();
 
     let sb = tarbox::TarboxSecretBuilder::new();
-    let sb = sb.key(key);
-
+    let sb = sb.password(password.clone());
     let dest = dest.clone().unwrap_or(path.parent().unwrap().to_path_buf());
 
     unseal_path(&path, &dest, sb)?;

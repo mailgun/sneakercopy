@@ -1,13 +1,8 @@
 use base64;
 use sodiumoxide::crypto::pwhash;
-pub use sodiumoxide::crypto::pwhash::scryptsalsa208sha256::{ SALTBYTES, Salt };
+pub use sodiumoxide::crypto::pwhash::scryptsalsa208sha256::{ SALTBYTES, Salt, OPSLIMIT_INTERACTIVE, MEMLIMIT_INTERACTIVE };
 use sodiumoxide::crypto::secretbox;
 pub use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{ KEYBYTES, NONCEBYTES, Key, Nonce };
-
-pub fn decode_key(key: String) -> Option<Key> {
-    let bytes = base64::decode(&key).unwrap();
-    Key::from_slice(bytes.as_slice())
-}
 
 pub fn decode_nonce(nonce: String) -> Option<Nonce> {
     let bytes = base64::decode(&nonce).unwrap();
@@ -20,27 +15,36 @@ pub fn decode_salt(salt: String) -> Option<Salt> {
 }
 
 builder!(pub : TarboxSecretBuilder => TarboxSecret {
-    key: Key = None,
+    password: String = None,
     nonce: Nonce = None,
     salt: Salt = None
 });
 
 impl TarboxSecret {
     /// Make a brand new _random_ `TarboxSecret` to use for encrypting a tarbox.
-    pub fn generate() -> TarboxSecret {
+    pub fn generate(password: String) -> TarboxSecret {
         TarboxSecret {
-            key: secretbox::gen_key(),
+            password: password.clone(),
             nonce: secretbox::gen_nonce(),
-            salt: pwhash::gen_salt(),
+            salt: pwhash::gen_salt()
         }
     }
 
-    pub fn key(&self) -> &Key {
-        &self.key
+    pub fn key(&self) -> Key {
+        // derive the actual key from the password and salt
+        let mut key = secretbox::Key([0; secretbox::KEYBYTES]);
+
+        {
+            let secretbox::Key(ref mut buffer) = key;
+            pwhash::derive_key(buffer, self.password.as_bytes(), &self.salt,
+                OPSLIMIT_INTERACTIVE, MEMLIMIT_INTERACTIVE).unwrap();
+        }
+
+        key
     }
 
-    pub fn encoded_key(&self) -> String {
-        String::from(base64::encode(&self.key.0))
+    pub fn password(&self) -> &String {
+        &self.password
     }
 
     pub fn nonce(&self) -> &Nonce {
