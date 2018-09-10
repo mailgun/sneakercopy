@@ -28,6 +28,21 @@ enum Subcommand {
     Seal {
         #[structopt(help = "File/folder path to archive", parse(from_os_str))]
         path: PathBuf,
+
+        #[structopt(
+            short = "o",
+            long = "output",
+            help = "Optional output location",
+            parse(from_os_str)
+        )]
+        output: Option<PathBuf>,
+
+        #[structopt(
+            short = "f",
+            long = "force",
+            help = "Force overwriting of output"
+        )]
+        force: bool,
     },
 
     #[structopt(name = "unseal", about = "Unseal an encrypted archive")]
@@ -68,7 +83,11 @@ main!(|args: Cli, log_level: verbosity| {
 fn entrypoint(args: Cli) -> sneakercopy::errors::Result<()> {
     let action = &args.subcmd;
     match action {
-        Subcommand::Seal { path } => seal_subcmd(&args, path)?,
+        Subcommand::Seal {
+            path,
+            output,
+            force,
+        } => seal_subcmd(&args, path, output, force)?,
         Subcommand::Unseal {
             path,
             password,
@@ -90,10 +109,17 @@ fn check_path(path: &PathBuf) -> sneakercopy::errors::Result<()> {
     Ok(())
 }
 
-fn seal_subcmd(_args: &Cli, path: &PathBuf) -> sneakercopy::errors::Result<()> {
+fn seal_subcmd(
+    _args: &Cli,
+    path: &PathBuf,
+    output: &Option<PathBuf>,
+    force: &bool,
+) -> sneakercopy::errors::Result<()> {
     check_path(&path)?;
-    let secret = seal_path(&path)?;
-    println!("secret: {}", secret.password());
+
+    let secret = seal_path(&path, &output, *force)?;
+    println!("\nsecret: {}", secret.password());
+
     Ok(())
 }
 
