@@ -98,19 +98,19 @@ mod tests {
         Decoder,
         TARBOX_MAGIC,
     };
+    use ::password;
     use ::tarbox::secret::{
-        KEYBYTES, NONCEBYTES, SALTBYTES,
-        Key, Nonce, Salt,
+        NONCEBYTES, SALTBYTES,
+        Nonce, Salt,
         TarboxSecret,
         TarboxSecretBuilder,
     };
 
     fn make_tarbox_secret() -> TarboxSecret {
-        let key = Key::from_slice(&[0xca; KEYBYTES]).unwrap();
         let nonce = Nonce::from_slice(&[0xfe; NONCEBYTES]).unwrap();
         let salt = Salt::from_slice(&[0xba; SALTBYTES]).unwrap();
         TarboxSecretBuilder::new()
-            .key(key)
+            .password(password::generate_password())
             .nonce(nonce)
             .salt(salt)
             .build().unwrap()

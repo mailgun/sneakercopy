@@ -4,7 +4,7 @@
 #[macro_use] extern crate quicli;
 extern crate sneakercopy;
 extern crate sodiumoxide;
-#[macro_use] extern crate structopt;
+extern crate structopt;
 
 use quicli::prelude::*;
 use std::path::PathBuf;
