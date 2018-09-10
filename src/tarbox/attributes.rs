@@ -1,16 +1,12 @@
 use super::{
     errors,
-    secret::{
-        NONCEBYTES,
-        SALTBYTES,
-        TarboxSecret,
-    },
+    secret::{TarboxSecret, NONCEBYTES, SALTBYTES},
 };
 
 pub type NonceBytes = [u8; NONCEBYTES];
 pub type SaltBytes = [u8; SALTBYTES];
 
-pub const VERSION: u8 = 0x1; 
+pub const VERSION: u8 = 0x1;
 
 #[derive(Clone, Debug)]
 pub struct Attributes {
@@ -136,9 +132,15 @@ mod tests {
         assert!(res.is_err());
         let err = res.unwrap_err();
         if let errors::Error(errors::ErrorKind::SourceNotFullyDrained(num), _) = err {
-            assert_eq!(2, num, "only 2 bytes were expected to be remaining (undrained)");
+            assert_eq!(
+                2, num,
+                "only 2 bytes were expected to be remaining (undrained)"
+            );
         } else {
-            panic!(format!("expected `SourceNotFullyDrained` error, got: {:?}", err));
+            panic!(format!(
+                "expected `SourceNotFullyDrained` error, got: {:?}",
+                err
+            ));
         }
     }
 }

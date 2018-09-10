@@ -2,23 +2,26 @@
 #![feature(int_to_from_bytes)]
 
 extern crate base64;
-#[macro_use] extern crate error_chain;
+#[macro_use]
+extern crate error_chain;
 extern crate libflate;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
 extern crate rand;
 extern crate sodiumoxide;
 extern crate tar;
 
-#[macro_use] mod builder;
+#[macro_use]
+mod builder;
 pub mod crypt;
 pub mod errors;
 pub mod flate;
 pub mod pack;
-pub mod tarbox;
 pub mod password;
+pub mod tarbox;
 
 use std::ffi::OsStr;
-use std::fs::{ DirBuilder, File, OpenOptions };
+use std::fs::{DirBuilder, File, OpenOptions};
 use std::io::prelude::*;
 use std::path::PathBuf;
 
@@ -72,14 +75,20 @@ pub fn seal_path(path: &PathBuf) -> errors::Result<tarbox::TarboxSecret> {
     Ok(secret)
 }
 
-pub fn unseal_path(path: &PathBuf, dest: &PathBuf, sb: tarbox::TarboxSecretBuilder) -> errors::Result<()> {
-    DirBuilder::new()
-        .recursive(true)
-        .create(&dest)?;
+pub fn unseal_path(
+    path: &PathBuf,
+    dest: &PathBuf,
+    sb: tarbox::TarboxSecretBuilder,
+) -> errors::Result<()> {
+    DirBuilder::new().recursive(true).create(&dest)?;
 
     let mut source_file = File::open(path)?;
     let source_meta = source_file.metadata()?;
-    debug!("reading {} bytes from tarbox: {:?}", source_meta.len(), path);
+    debug!(
+        "reading {} bytes from tarbox: {:?}",
+        source_meta.len(),
+        path
+    );
 
     let mut buf = Vec::new();
     source_file.read_to_end(&mut buf)?;

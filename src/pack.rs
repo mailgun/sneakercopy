@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::vec::Vec;
 use tar;
 
-use super::{ BufResult, errors };
+use super::{errors, BufResult};
 
 pub fn pack_archive(src: &PathBuf) -> BufResult {
     let mut archive = tar::Builder::new(Vec::new());

@@ -1,7 +1,8 @@
 #![recursion_limit = "1024"]
 #![feature(try_from)]
 
-#[macro_use] extern crate quicli;
+#[macro_use]
+extern crate quicli;
 extern crate sneakercopy;
 extern crate sodiumoxide;
 extern crate structopt;
@@ -9,11 +10,7 @@ extern crate structopt;
 use quicli::prelude::*;
 use std::path::PathBuf;
 
-use sneakercopy::{
-    *,
-    errors::*,
-    tarbox,
-};
+use sneakercopy::{errors::*, tarbox, *};
 
 #[derive(Debug, StructOpt)]
 #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
@@ -41,7 +38,12 @@ enum Subcommand {
         #[structopt(help = "Password used for encryption")]
         password: String,
 
-        #[structopt(short = "C", long = "extract-to", help = "Directory to extract archive to", parse(from_os_str))]
+        #[structopt(
+            short = "C",
+            long = "extract-to",
+            help = "Directory to extract archive to",
+            parse(from_os_str)
+        )]
         dest: Option<PathBuf>,
     },
 }
@@ -66,8 +68,12 @@ main!(|args: Cli, log_level: verbosity| {
 fn entrypoint(args: Cli) -> sneakercopy::errors::Result<()> {
     let action = &args.subcmd;
     match action {
-        Subcommand::Seal{ path } => seal_subcmd(&args, path)?,
-        Subcommand::Unseal{ path, password, dest } => unseal_subcmd(&args, path, dest, password)?,
+        Subcommand::Seal { path } => seal_subcmd(&args, path)?,
+        Subcommand::Unseal {
+            path,
+            password,
+            dest,
+        } => unseal_subcmd(&args, path, dest, password)?,
     }
 
     Ok(())
@@ -91,7 +97,12 @@ fn seal_subcmd(_args: &Cli, path: &PathBuf) -> sneakercopy::errors::Result<()> {
     Ok(())
 }
 
-fn unseal_subcmd(_args: &Cli, path: &PathBuf, dest: &Option<PathBuf>, password: &String) -> sneakercopy::errors::Result<()> {
+fn unseal_subcmd(
+    _args: &Cli,
+    path: &PathBuf,
+    dest: &Option<PathBuf>,
+    password: &String,
+) -> sneakercopy::errors::Result<()> {
     check_path(&path)?;
 
     let sb = tarbox::TarboxSecretBuilder::new();

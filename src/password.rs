@@ -1,13 +1,14 @@
-use rand::{seq, prng, thread_rng, SeedableRng};
+use rand::{prng, seq, thread_rng, SeedableRng};
 
 // generate a reasonable password
 pub fn generate_password() -> String {
     let mut rng = prng::chacha::ChaChaRng::from_rng(thread_rng()).unwrap();
     let sample = seq::sample_iter(&mut rng, WORDS.into_iter(), 5).unwrap();
-    sample.into_iter()
-          .map(|x| String::from(*x))
-          .collect::<Vec<String>>()
-          .join("-")
+    sample
+        .into_iter()
+        .map(|x| String::from(*x))
+        .collect::<Vec<String>>()
+        .join("-")
 }
 
 static WORDS: [&str; 2048] = [
