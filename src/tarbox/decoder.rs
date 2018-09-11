@@ -1,12 +1,8 @@
 use std::cmp;
 use std::io;
-use std::io::{ Read, Write };
+use std::io::{Read, Write};
 
-use super::{
-    TARBOX_MAGIC,
-    attributes::Attributes,
-    errors,
-};
+use super::{attributes::Attributes, errors, TARBOX_MAGIC};
 
 #[derive(Clone, Debug)]
 pub struct Decoder {
@@ -32,12 +28,16 @@ impl Decoder {
         // Get the version byte
         let version = inner.remove(0);
         if version != Attributes::version() {
-            bail!(errors::ErrorKind::VersionMismatch(Attributes::version(), version));
+            bail!(errors::ErrorKind::VersionMismatch(
+                Attributes::version(),
+                version
+            ));
         }
 
         // Now that we have verified the version of the header,
         // read all bytes until a `NUL` is encountered.
-        let attrs_data: Vec<_> = inner.clone()
+        let attrs_data: Vec<_> = inner
+            .clone()
             .into_iter()
             .take_while(|b| *b != 0x0)
             .collect();
@@ -92,28 +92,20 @@ impl Read for Decoder {
 
 #[cfg(test)]
 mod tests {
+    use super::{errors, Decoder, TARBOX_MAGIC};
+    use password;
     use std::io::Read;
-    use super::{
-        errors,
-        Decoder,
-        TARBOX_MAGIC,
-    };
-    use ::tarbox::secret::{
-        KEYBYTES, NONCEBYTES, SALTBYTES,
-        Key, Nonce, Salt,
-        TarboxSecret,
-        TarboxSecretBuilder,
-    };
+    use tarbox::secret::{Nonce, Salt, TarboxSecret, TarboxSecretBuilder, NONCEBYTES, SALTBYTES};
 
     fn make_tarbox_secret() -> TarboxSecret {
-        let key = Key::from_slice(&[0xca; KEYBYTES]).unwrap();
         let nonce = Nonce::from_slice(&[0xfe; NONCEBYTES]).unwrap();
         let salt = Salt::from_slice(&[0xba; SALTBYTES]).unwrap();
         TarboxSecretBuilder::new()
-            .key(key)
+            .password(password::generate_password())
             .nonce(nonce)
             .salt(salt)
-            .build().unwrap()
+            .build()
+            .unwrap()
     }
 
     fn make_header(secret: &TarboxSecret) -> Vec<u8> {
@@ -137,7 +129,9 @@ mod tests {
         // Create a decoder and read the inner data from it
         let mut dec = Decoder::new(payload).unwrap();
         let mut data = Vec::new();
-        let actual_size = dec.read_to_end(&mut data).expect("error reading data into decoder");
+        let actual_size = dec
+            .read_to_end(&mut data)
+            .expect("error reading data into decoder");
         let attrs = dec.attributes_into();
 
         assert_eq!(2, actual_size);
@@ -163,7 +157,10 @@ mod tests {
         if let errors::Error(errors::ErrorKind::SourceNotFullyDrained(num), _) = err {
             assert_eq!(2, num, "expected undrained data to be length of inner file");
         } else {
-            panic!(format!("expected `SourceNotFullyDrained` error, got: {:?}", err));
+            panic!(format!(
+                "expected `SourceNotFullyDrained` error, got: {:?}",
+                err
+            ));
         }
     }
 }

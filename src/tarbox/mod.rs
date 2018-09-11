@@ -1,18 +1,18 @@
 //! This module defines a thin file container for
 //! holding tarbox metadata.
 
-use std::io::{ Read, Write };
+use std::io::{Read, Write};
 
 pub mod attributes;
-pub mod errors;
 pub mod decoder;
 pub mod encoder;
+pub mod errors;
 pub mod secret;
 
 pub use self::attributes::Attributes;
 pub use self::decoder::Decoder;
 pub use self::encoder::Encoder;
-pub use self::secret::{ TarboxSecret, TarboxSecretBuilder };
+pub use self::secret::{TarboxSecret, TarboxSecretBuilder};
 
 pub const TARBOX_MAGIC: [u8; 2] = [0x7a, 0xb0];
 

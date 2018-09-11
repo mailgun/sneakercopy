@@ -1,10 +1,7 @@
 use std::io;
-use std::io::{ Write };
+use std::io::Write;
 
-use super::{
-    Attributes,
-    TARBOX_MAGIC,
-};
+use super::{Attributes, TARBOX_MAGIC};
 
 #[derive(Clone, Debug)]
 pub struct Encoder {
@@ -27,7 +24,7 @@ impl Encoder {
 
     /// Writes the tarbox header and then the wrapped content.
     /// The header will look like the following:
-    /// 
+    ///
     /// ```text
     /// +--------------+--------+-------+-----+
     /// | TARBOX MAGIC |  VERS  | ATTRS | NUL |
@@ -69,12 +66,8 @@ impl Write for Encoder {
 
 #[cfg(test)]
 mod tests {
+    use super::{Attributes, Encoder, TARBOX_MAGIC};
     use std::io::Write;
-    use super::{
-        Attributes,
-        Encoder,
-        TARBOX_MAGIC,
-    };
 
     #[test]
     fn test_encoder() {

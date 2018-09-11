@@ -1,8 +1,8 @@
-use libflate::gzip::{ Decoder, Encoder };
-use std::io::{ Read, Write };
+use libflate::gzip::{Decoder, Encoder};
+use std::io::{Read, Write};
 use std::vec::Vec;
 
-use super::{ BufResult };
+use super::BufResult;
 
 pub fn compress_buffer(buf: &Vec<u8>) -> BufResult {
     let mut compressor = Encoder::new(Vec::new())?;

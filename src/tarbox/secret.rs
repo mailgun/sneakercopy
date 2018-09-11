@@ -1,8 +1,10 @@
 use base64;
 use sodiumoxide::crypto::pwhash;
-pub use sodiumoxide::crypto::pwhash::scryptsalsa208sha256::{ SALTBYTES, Salt, OPSLIMIT_INTERACTIVE, MEMLIMIT_INTERACTIVE };
+pub use sodiumoxide::crypto::pwhash::scryptsalsa208sha256::{
+    Salt, MEMLIMIT_INTERACTIVE, OPSLIMIT_INTERACTIVE, SALTBYTES,
+};
 use sodiumoxide::crypto::secretbox;
-pub use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{ KEYBYTES, NONCEBYTES, Key, Nonce };
+pub use sodiumoxide::crypto::secretbox::xsalsa20poly1305::{Key, Nonce, KEYBYTES, NONCEBYTES};
 
 pub fn decode_nonce(nonce: String) -> Option<Nonce> {
     let bytes = base64::decode(&nonce).unwrap();
@@ -26,7 +28,7 @@ impl TarboxSecret {
         TarboxSecret {
             password: password.clone(),
             nonce: secretbox::gen_nonce(),
-            salt: pwhash::gen_salt()
+            salt: pwhash::gen_salt(),
         }
     }
 
@@ -36,8 +38,13 @@ impl TarboxSecret {
 
         {
             let secretbox::Key(ref mut buffer) = key;
-            pwhash::derive_key(buffer, self.password.as_bytes(), &self.salt,
-                OPSLIMIT_INTERACTIVE, MEMLIMIT_INTERACTIVE).unwrap();
+            pwhash::derive_key(
+                buffer,
+                self.password.as_bytes(),
+                &self.salt,
+                OPSLIMIT_INTERACTIVE,
+                MEMLIMIT_INTERACTIVE,
+            ).unwrap();
         }
 
         key
