@@ -1,6 +1,7 @@
 #![recursion_limit = "1024"]
 #![feature(try_from)]
 
+extern crate rpassword;
 #[macro_use]
 extern crate quicli;
 extern crate sneakercopy;
@@ -51,7 +52,7 @@ enum Subcommand {
         path: PathBuf,
 
         #[structopt(help = "Password used for encryption")]
-        password: String,
+        password: Option<String>,
 
         #[structopt(
             short = "C",
@@ -127,12 +128,17 @@ fn unseal_subcmd(
     _args: &Cli,
     path: &PathBuf,
     dest: &Option<PathBuf>,
-    password: &String,
+    password: &Option<String>,
 ) -> sneakercopy::errors::Result<()> {
     check_path(&path)?;
 
+    let password = password.clone().unwrap_or_else(|| {
+        return rpassword::prompt_password_stdout("secret: ")
+            .expect("can't open tarbox without a secret!");
+    });
+
     let sb = tarbox::TarboxSecretBuilder::new();
-    let sb = sb.password(password.clone());
+    let sb = sb.password(password);
     let dest = dest.clone().unwrap_or(path.parent().unwrap().to_path_buf());
 
     unseal_path(&path, &dest, sb)?;
