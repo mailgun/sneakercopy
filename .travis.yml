@@ -12,8 +12,9 @@ matrix:
 addons:
   apt:
     packages:
-    - clang-4.0
-    - libclang-4.0-dev
+    - clang-3.9
+    - curl
+    - libclang-3.9-dev
 
 cache:
   cargo: true
