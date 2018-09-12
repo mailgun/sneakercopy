@@ -9,21 +9,24 @@ matrix:
       rust: nightly
       env: TARGET=x86_64-unknown-linux-gnu
 
+addons:
+  apt:
+    packages:
+    - clang-4.0
+    - libclang-4.0-dev
+
 cache:
   cargo: true
   directories:
     - "$HOME/lib"
 
-before_install:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install libsodium; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then source ./ci/linux-libsodium-path.sh; fi
-
 install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then bash ./ci/linux-build-libsodium.sh; fi
+  - source ./ci/libsodium-build.sh
+  - source ./ci/libsodium-env.sh
 
 script:
   - cargo build --verbose --target "${TARGET}"
-  - cargo test --verbose --target "${TARGET}"
+  - cargo test --verbose
 
 before_deploy:
   - cargo build --release --verbose --target "${TARGET}"
