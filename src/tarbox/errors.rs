@@ -25,11 +25,6 @@ error_chain! {
             display("source vector is too large: {} expected < {} actual", expected, actual),
         }
 
-        SourceNotFullyDrained(size: usize) {
-            description("source vector was not fully drained"),
-            display("source vector was not fully drained: {} elements remaining", size),
-        }
-
         VersionMismatch(expected: u8, actual: u8) {
             description("tarbox header version mismatch"),
             display("tarbox header version mismatch: expected={} actual={}", expected, actual),

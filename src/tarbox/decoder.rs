@@ -149,8 +149,8 @@ mod tests {
 
         assert!(res.is_err());
         let err = res.unwrap_err();
-        if let errors::Error(errors::ErrorKind::SourceNotFullyDrained(num), _) = err {
-            assert_eq!(2, num, "expected undrained data to be length of inner file");
+        if let errors::Error(errors::ErrorKind::ExpectedNullByte(actual), _) = err {
+            assert_eq!(0xfa, actual, "expected first byte of payload, not {}", actual);
         } else {
             panic!(format!(
                 "expected `SourceNotFullyDrained` error, got: {:?}",

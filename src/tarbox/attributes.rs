@@ -58,11 +58,6 @@ impl Attributes {
         let mut salt = [0; SALTBYTES];
         salt.copy_from_slice(&source[NONCEBYTES..NONCEBYTES + SALTBYTES]);
 
-        let remaining = source.len() - (NONCEBYTES + SALTBYTES);
-        if remaining > 0 {
-            bail!(errors::ErrorKind::SourceNotFullyDrained(remaining));
-        }
-
         Ok(Attributes::new(nonce, salt))
     }
 
@@ -141,10 +136,10 @@ mod tests {
         let res = Attributes::from_bytes(source);
         assert!(res.is_err());
         let err = res.unwrap_err();
-        if let errors::Error(errors::ErrorKind::SourceNotFullyDrained(num), _) = err {
+        if let errors::Error(errors::ErrorKind::SourceTooLarge(_, actual), _) = err {
             assert_eq!(
-                2, num,
-                "only 2 bytes were expected to be remaining (undrained)"
+                58, actual,
+                "only 56 bytes were expected in attrs source (2 undrained)"
             );
         } else {
             panic!(format!(
