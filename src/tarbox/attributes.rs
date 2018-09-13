@@ -33,6 +33,10 @@ impl Attributes {
         VERSION
     }
 
+    pub fn attr_block_size() -> usize {
+        (NONCEBYTES + SALTBYTES) as usize
+    }
+
     pub fn nonce(&self) -> &NonceBytes {
         &self.nonce
     }
@@ -42,16 +46,17 @@ impl Attributes {
     }
 
     pub fn from_bytes(source: Vec<u8>) -> errors::Result<Attributes> {
+        let expected: usize = NONCEBYTES + SALTBYTES;
+        let actual: usize = source.len();
+        if actual > expected {
+            bail!(errors::ErrorKind::SourceTooLarge(expected, actual));
+        }
+
         let mut nonce = [0; NONCEBYTES];
         nonce.copy_from_slice(&source[..NONCEBYTES]);
 
         let mut salt = [0; SALTBYTES];
         salt.copy_from_slice(&source[NONCEBYTES..NONCEBYTES + SALTBYTES]);
-
-        let remaining = source.len() - (NONCEBYTES + SALTBYTES);
-        if remaining > 0 {
-            bail!(errors::ErrorKind::SourceNotFullyDrained(remaining));
-        }
 
         Ok(Attributes::new(nonce, salt))
     }
@@ -131,10 +136,10 @@ mod tests {
         let res = Attributes::from_bytes(source);
         assert!(res.is_err());
         let err = res.unwrap_err();
-        if let errors::Error(errors::ErrorKind::SourceNotFullyDrained(num), _) = err {
+        if let errors::Error(errors::ErrorKind::SourceTooLarge(_, actual), _) = err {
             assert_eq!(
-                2, num,
-                "only 2 bytes were expected to be remaining (undrained)"
+                58, actual,
+                "only 56 bytes were expected in attrs source (2 undrained)"
             );
         } else {
             panic!(format!(

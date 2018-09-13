@@ -36,14 +36,9 @@ impl Decoder {
 
         // Now that we have verified the version of the header,
         // read all bytes until a `NUL` is encountered.
-        let attrs_data: Vec<_> = inner
-            .clone()
-            .into_iter()
-            .take_while(|b| *b != 0x0)
-            .collect();
+        let attrs_data: Vec<_> = inner.drain(..Attributes::attr_block_size()).collect();
 
-        let attrs = Attributes::from_bytes(attrs_data.clone())?;
-        inner.drain(..attrs_data.len());
+        let attrs = Attributes::from_bytes(attrs_data)?;
 
         // The next byte we read should be a `NUL`.
         let next = inner.remove(0);
@@ -154,8 +149,8 @@ mod tests {
 
         assert!(res.is_err());
         let err = res.unwrap_err();
-        if let errors::Error(errors::ErrorKind::SourceNotFullyDrained(num), _) = err {
-            assert_eq!(2, num, "expected undrained data to be length of inner file");
+        if let errors::Error(errors::ErrorKind::ExpectedNullByte(actual), _) = err {
+            assert_eq!(0xfa, actual, "expected first byte of payload, not {}", actual);
         } else {
             panic!(format!(
                 "expected `SourceNotFullyDrained` error, got: {:?}",

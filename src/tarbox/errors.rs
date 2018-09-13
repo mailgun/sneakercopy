@@ -20,9 +20,9 @@ error_chain! {
             display("invalid key data: {}", kd),
         }
 
-        SourceNotFullyDrained(size: usize) {
-            description("source vector was not fully drained"),
-            display("source vector was not fully drained: {} elements remaining", size),
+        SourceTooLarge(expected: usize, actual: usize) {
+            description("source vector is too large"),
+            display("source vector is too large: {} expected < {} actual", expected, actual),
         }
 
         VersionMismatch(expected: u8, actual: u8) {
