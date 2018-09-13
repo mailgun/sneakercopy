@@ -33,6 +33,10 @@ impl Attributes {
         VERSION
     }
 
+    pub fn attr_block_size() -> usize {
+        (NONCEBYTES + SALTBYTES) as usize
+    }
+
     pub fn nonce(&self) -> &NonceBytes {
         &self.nonce
     }
@@ -42,6 +46,12 @@ impl Attributes {
     }
 
     pub fn from_bytes(source: Vec<u8>) -> errors::Result<Attributes> {
+        let expected: usize = NONCEBYTES + SALTBYTES;
+        let actual: usize = source.len();
+        if actual > expected {
+            bail!(errors::ErrorKind::SourceTooLarge(expected, actual));
+        }
+
         let mut nonce = [0; NONCEBYTES];
         nonce.copy_from_slice(&source[..NONCEBYTES]);
 

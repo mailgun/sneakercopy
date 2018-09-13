@@ -88,12 +88,12 @@ fn entrypoint(args: Cli) -> sneakercopy::errors::Result<()> {
             path,
             output,
             force,
-        } => seal_subcmd(&args, path, output, force)?,
+        } => seal_subcmd(&args, &path.canonicalize().unwrap(), output, force)?,
         Subcommand::Unseal {
             path,
             password,
             dest,
-        } => unseal_subcmd(&args, path, dest, password)?,
+        } => unseal_subcmd(&args, &path.canonicalize().unwrap(), dest, password)?,
     }
 
     Ok(())
